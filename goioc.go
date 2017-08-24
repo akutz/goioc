@@ -18,7 +18,7 @@ var (
 // old registration will be overridden.
 func Register(name string, ctor func() interface{}) {
 	ctorsRWL.Lock()
-	ctorsRWL.Unlock()
+	defer ctorsRWL.Unlock()
 	ctors[name] = ctor
 }
 
@@ -26,7 +26,7 @@ func Register(name string, ctor func() interface{}) {
 // specified type name is not found then a nil value is returned.
 func New(name string) interface{} {
 	ctorsRWL.RLock()
-	ctorsRWL.RUnlock()
+	defer ctorsRWL.RUnlock()
 	ctor, ok := ctors[name]
 	if !ok {
 		return nil
@@ -49,7 +49,7 @@ func Implements(ifaceObj interface{}) chan interface{} {
 	go func() {
 		ifaceType := reflect.TypeOf(ifaceObj).Elem()
 		ctorsRWL.RLock()
-		ctorsRWL.RUnlock()
+		defer ctorsRWL.RUnlock()
 		for _, ctor := range ctors {
 			o := ctor()
 			if reflect.TypeOf(o).Implements(ifaceType) {
